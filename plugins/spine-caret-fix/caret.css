@@ -1,0 +1,4 @@
+/* Spine の入力欄でカーソルが文字に埋もれるのを、3px 下げて避ける */
+.sf-chat-spine [data-role^="omp.editor"] .sf-caret {
+  transform: translateY(3px) !important;
+}

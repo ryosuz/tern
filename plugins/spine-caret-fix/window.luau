@@ -1,0 +1,1 @@
+-- Styles only (caret.css). A manifest needs at least one entry, so this one is empty.

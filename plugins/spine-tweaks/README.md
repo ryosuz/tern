@@ -6,7 +6,6 @@ Styling for Tern's Spine chat (omp conversations):
 
 - Your own picture as your avatar.
 - A tinted, rounded background behind your messages.
-- The editor caret nudged down to line up with the text.
 
 ## Install
 

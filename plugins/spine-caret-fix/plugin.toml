@@ -1,0 +1,8 @@
+schema = 1
+id = "spine-caret-fix"
+name = "Spine Caret Fix"
+version = "0.1.0"
+description = "Moves the Spine chat editor's caret down so it doesn't sink into the text."
+icon = "text"
+window = "window.luau"
+styles = ["caret.css"]
