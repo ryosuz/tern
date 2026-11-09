@@ -1,0 +1,11 @@
+/* 自分のメッセージ背景 */
+.sf-chat-spine [data-role="omp.user"] {
+  background-color: var(--l1) !important;
+  border-radius: 8px !important;
+  padding-left: 8px;
+  padding-bottom: 8px;
+}
+
+.sf-chat-spine [data-role^="omp.editor"] .sf-caret {
+  transform: translateY(3px) !important;
+}

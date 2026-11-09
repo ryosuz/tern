@@ -1,0 +1,8 @@
+schema = 1
+id = "spine-tweaks"
+name = "Spine Tweaks"
+version = "1.1.0"
+description = "Custom styling for Tern's Spine chat, including user avatars and message backgrounds."
+
+window = "window.luau"
+styles = ["spine.css"]
