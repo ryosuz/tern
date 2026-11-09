@@ -2,15 +2,27 @@
 
 English | [日本語](README.ja.md)
 
-Gives each Tern session a root directory. New tabs in a session that has a
-root open there.
+Give each Tern session its own root directory. Once a session has one, new
+tabs in it open there instead of wherever you happened to be.
 
-| Where a tab opens from | How it reaches the root |
-| --- | --- |
-| New Tab (⌘T, the toolbar's +, the palette) | `tern.override("new_tab")` opens it at the root |
-| The + on a session's row in the vertical tab list | That button doesn't run New Tab: it opens a shell in the directory of the session's focused pane. `tab_created` notices the tab and replaces it with one at the root, in the same position |
+Handy when each session is a project: a new tab in the `api` session starts in
+the api repository, a new tab in `web` starts in the web repository.
 
-Splits keep Tern's usual behavior.
+## Install
+
+```sh
+tern plugin install github.com/ryosuz/tern/plugins/session-root
+```
+
+## Quick start
+
+1. Switch to the session and `cd` to the project's directory.
+2. Run **Session root: use this directory** from the palette.
+3. Press ⌘T, or the + on the session's row in the tab list: the tab opens in
+   that directory.
+
+To start a fresh session for a project, run **New session at directory…** and
+enter the path. The session is named after the folder and rooted there.
 
 ## Commands
 
@@ -18,65 +30,38 @@ All are in the palette under **Session Root**.
 
 | Command | Does |
 | --- | --- |
-| Session root: use this directory | The focused pane's directory becomes the current session's root |
-| Session root: set… | Asks for the root (absolute path or `~/…`) |
-| Session root: clear | Drops the current session's root |
-| New session at directory… | Asks for a directory and creates a session named after it, rooted there |
+| Session root: use this directory | Makes the focused pane's directory the current session's root |
+| Session root: set… | Asks for the root (an absolute path or `~/…`) |
+| Session root: clear | Removes the current session's root |
+| New session at directory… | Creates a session for a directory, with that directory as its root |
 
-## Storage
+## What opens at the root
 
-Roots live in `tern.kv` (`<state>/plugin-data/session-root/kv.json`) under
-the key `sessions`, nested by scope, then session name:
+- New Tab: ⌘T, the toolbar's +, and the palette.
+- The + on a session's row in the vertical tab list.
 
-```json
-{
-  "sessions": {
-    "local": { "LMS": { "root": "/path/to/lms", "id": 51539607557 } },
-    "remote:dev.example.com": { "api": { "root": "/srv/api" } }
-  }
-}
-```
+Splits still open in the current pane's directory. Sessions without a root
+behave as usual.
 
-Because the scope and the name are separate levels, a local session and a
-remote session never share a key, whatever they are called. Each entry also
-remembers the session's id. On `window_start` the plugin refreshes those ids,
-so a rename during a run keeps the root.
+## Where roots are kept
 
-A session's root is removed when the session ends:
+In the plugin's data folder, as `kv.json`:
 
-- **While a window runs.** `session_ended` removes it (when both the id and
-  the name match).
-- **While no window runs** (for example `tern kill session`). The next
-  `window_start` removes local roots whose session no longer exists. Roots
-  on remote hosts stay, since their host may not be attached yet.
+| OS | Data folder |
+| --- | --- |
+| macOS | `~/Library/Application Support/Tern/plugin-data/session-root/` |
+| Linux | `~/.local/state/tern/plugin-data/session-root/` |
+| Windows | `%LOCALAPPDATA%\Tern\plugin-data\session-root\` |
 
-## Install
+Roots survive updating or reinstalling the plugin. Renaming a session keeps
+its root, and closing a session removes it.
 
-From the repository root:
+## Known limitations
 
-```sh
-tern plugin link plugins/session-root
-```
-
-A linked plugin reloads every time you save. `tern plugin unlink session-root` removes it.
-
-For type checking with luau-lsp, generate `tern.d.luau` (not committed) and
-regenerate it after a Tern update:
-
-```sh
-tern plugin types plugins/session-root
-```
-
-## Limits
-
-- **The + button.** Replacing the tab starts a shell and closes it right
-  away. Only a single shell tab that took the focused pane's directory is
-  replaced. Tabs another plugin opens in a directory of its own choosing
-  (for example `cx.layout:new_tab({cwd = ...})`) are left alone.
-- **Tabs opened outside the window.** A tab created by another window on
-  the same session fires no `tab_created` here, so it doesn't move to the
-  root. Tabs from Carly or `tern` CLI scripts haven't been tested.
-- **Remote hosts.** The plugin checks that a root exists only on this
-  machine. On a remote host the path is stored as typed.
-- **Renames across a Tern restart.** Session ids aren't trusted across
-  restarts. A session renamed while its window was closed loses its root.
+- **A brief flicker with the session row's +.** That button opens the tab in
+  the old directory first; the plugin then swaps it for one at the root.
+- **Tabs opened from another window** on the same session don't move to the
+  root.
+- **Remote hosts.** A root on a remote host isn't checked for existence, so a
+  typo is saved as typed.
+- **Renaming a session while Tern is closed** loses its root. Set it again.
