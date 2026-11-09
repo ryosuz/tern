@@ -38,6 +38,10 @@ tern plugin install github.com/ryosuz/tern/plugins/session-root
 
 分割は今までどおり、今いるペインのディレクトリで開きます。root を決めていないセッションも、今までどおりの動作です。
 
+## root の確認
+
+ステータスラインに、今のセッションの root がフォルダのアイコン付きで `~/src/api` のように表示されます。クリックすると root を変更できます。ステータスラインが出ていない場合は、パレットの **Show status line** で表示してください。
+
 ## 設定の保存先
 
 プラグインのデータフォルダの `kv.json` に保存されます。

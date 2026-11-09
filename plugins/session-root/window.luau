@@ -6,6 +6,10 @@
 -- session's row in the vertical tab list doesn't run New Tab: it opens a tab
 -- in the directory of that session's focused pane. Such a tab is noticed in
 -- `tab_created` and replaced by one at the root.
+--
+-- The status line shows the current session's root. Formatters get no `cx`,
+-- so `shown` holds it, updated on focus (a session switch always moves the
+-- focus) and when a root is set or cleared.
 
 local store = require("./store")
 
@@ -16,6 +20,9 @@ local fresh: { [number]: boolean } = {}
 -- Per session id: the last focused pane that existed before it was focused,
 -- the pane whose directory a session row's + copies.
 local last_focus: { [number]: number } = {}
+-- The current session's root as the status line shows it; nil for none.
+local shown: string? = nil
+local HOME = tern.getenv("HOME")
 
 type Host = { kind: string, address: string?, name: string }
 
@@ -73,10 +80,42 @@ local function accept_dir(cx: WindowCx, s: store.Session, text: string?): string
 	return dir
 end
 
+-- `root` for the status line, with the home directory as `~` on this machine.
+local function display(s: store.Session, root: string): string
+	if s.host == nil and HOME ~= nil then
+		if root == HOME then
+			return "~"
+		end
+		if string.sub(root, 1, #HOME + 1) == HOME .. "/" then
+			return "~" .. string.sub(root, #HOME + 1)
+		end
+	end
+	return root
+end
+
+-- Brings the status line up to date with the current session's root.
+local function update_status(cx: WindowCx)
+	local s = session(cx)
+	local root = store.get(s)
+	local text = if root then display(s, root) else nil
+	if text ~= shown then
+		shown = text
+		tern.chrome.refresh()
+	end
+end
+
 local function set_root(cx: WindowCx, s: store.Session, dir: string)
 	store.set(s, dir)
+	update_status(cx)
 	cx:toast("success", "Session root of " .. s.name, dir)
 end
+
+tern.chrome.status(function(_pane)
+	if shown == nil then
+		return nil
+	end
+	return { { text = shown, icon = "folder", tone = "muted", command = "plugin.session-root.set" } }
+end)
 
 -- New Tab, wherever it starts except a session row's +.
 tern.override("new_tab", function(cx)
@@ -101,6 +140,7 @@ tern.on("pane_closed", function(ev: { pane: number }, _cx)
 end)
 
 tern.on("focus", function(ev: { pane: number, tab: number }, cx)
+	update_status(cx)
 	if fresh[ev.pane] then
 		return
 	end
@@ -174,6 +214,7 @@ tern.on("window_start", function(cx: WindowCx)
 		table.insert(sessions, { id = s.id, name = s.name, host = hosts[s.host] })
 	end
 	store.sync(sessions)
+	update_status(cx)
 end)
 
 tern.command({
@@ -229,6 +270,7 @@ tern.command({
 	run = function(cx)
 		local s = session(cx)
 		store.clear(s)
+		update_status(cx)
 		cx:toast("info", "Session root of " .. s.name .. " cleared")
 	end,
 })
@@ -265,3 +307,11 @@ tern.command({
 		end)
 	end,
 })
+
+-- A reload doesn't run `window_start` again, so fill the status line once the
+-- entry has run.
+tern.timer(0, function(cx)
+	if cx ~= nil then
+		update_status(cx)
+	end
+end)

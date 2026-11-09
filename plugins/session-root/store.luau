@@ -77,7 +77,8 @@ end
 
 --- The root of session `s`, or nil. An entry under another name in the same
 --- scope that carries this session's id means the session was renamed: the
---- entry moves to the new name.
+--- entry moves to the new name. An entry found by name records the id, in
+--- case `sync` couldn't (the session wasn't listed yet).
 function store.get(s: Session): string?
 	local scopes = load()
 	local scope = scopes[scope_of(s)]
@@ -86,6 +87,10 @@ function store.get(s: Session): string?
 	end
 	local entry = scope[s.name]
 	if entry ~= nil then
+		if entry.id ~= s.id then
+			entry.id = s.id
+			save(scopes)
+		end
 		return entry.root
 	end
 	for old, e in scope do
@@ -135,9 +140,9 @@ function store.forget(id: number, name: string)
 end
 
 --- Records the ids of the sessions this window sees and drops ids recorded by
---- an earlier run, which may now name another session. Local entries whose
---- session is gone (ended while no window ran) are removed; remote ones stay,
---- since their host may just not be attached yet.
+--- an earlier run, which may now name another session. Entries of sessions it
+--- doesn't see are kept: at `window_start` after a restart the list may not
+--- hold every restored session yet, so absence proves nothing.
 function store.sync(sessions: { Session })
 	local scopes = load()
 	local seen: { [string]: { [string]: Session } } = {}
@@ -152,15 +157,10 @@ function store.sync(sessions: { Session })
 		local names = seen[key] or {}
 		for name, e in scope do
 			local s = names[name]
-			if s == nil and key == LOCAL then
-				scope[name] = nil
+			local id = if s then s.id else nil
+			if e.id ~= id then
+				e.id = id
 				changed = true
-			else
-				local id = if s then s.id else nil
-				if e.id ~= id then
-					e.id = id
-					changed = true
-				end
 			end
 		end
 	end

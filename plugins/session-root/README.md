@@ -43,6 +43,12 @@ All are in the palette under **Session Root**.
 Splits still open in the current pane's directory. Sessions without a root
 behave as usual.
 
+## Seeing the root
+
+The status line shows the current session's root after a folder icon, such as
+`~/src/api`. Click it to change the root. Turn the status line on with **Show
+status line** in the palette if it's hidden.
+
 ## Where roots are kept
 
 In the plugin's data folder, as `kv.json`:
