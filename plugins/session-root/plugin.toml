@@ -1,0 +1,7 @@
+schema = 1
+id = "session-root"
+name = "Session Root"
+version = "0.1.0"
+description = "Gives each session a root directory that new tabs open in."
+icon = "folder"
+window = "window.luau"
